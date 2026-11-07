@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>PRODUTOS</title>
+
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <main class="container">
+
+        <h1>Sistema de Produtos</h1>
+
+        <section class="card">
+
+            <h2>Cadastrar Produtos</h2>
+
+            <form action="/produtos" method="post">
+
+                <label for="nomeProduto">Nome Produto</label>
+                <input
+                    type="text"
+                    id="nomeProduto"
+                    name="nomeProduto"
+                    required
+                >
+
+                <label for="quantidade">Quantidade</label>
+                <input
+                    type="text"
+                    id="quantidade"
+                    name="quantidade"
+                    required
+                >
+                <label for="valorCompra">Valor Compra</label>
+                <input
+                    type="text"
+                    id="valorCompra"
+                    name="valorCompra"
+                    required
+                >
+                <label for="valorVenda">Valor Venda</label>
+                <input
+                    type="text"
+                    id="valorVenda"
+                    name="valorVenda"
+                    required
+                >
+                
+                
+
+                <button type="submit">
+                    Cadastrar
+                </button>
+
+
+            </form>
+			<a href="/produtos/lista">
+				 Ver Produtos cadastrados
+			</a>
+        </section>
+
+    </main>
+
+</body>
+
+</html>
