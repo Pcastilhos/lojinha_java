@@ -1,115 +1,95 @@
 package lojinha.controller;
 
-import java.util.ArrayList;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.util.List;
 
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.util.StreamUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import lojinha.model.Produtos;
+import lojinha.service.ProdutoService;
 
 @RestController
 public class ProdutoController {
 
-    private ArrayList<Produtos> produtos = new ArrayList<>();
-    @GetMapping("/produtos")
-    public String listarAlunos() {
+    private final ProdutoService produtoService;
 
-        String html = "<h1>Produtos cadastrados</h1>";
-
-        for (Produtos produtos : produtos) {
-            html += "<p>";
-            html += produtos.getnomeProduto() + " - ";
-            html += produtos.getquantidade();
-            html += produtos.getvalorVenda();
-            html += "</p>";
-        }
-
-        return html;
+    public ProdutoController(ProdutoService produtoService) {
+        this.produtoService = produtoService;
     }
-    
-@PostMapping("/produtos")
-public String cadastrar(
-        @RequestParam("nomeProduto") String nomeProduto,
-        @RequestParam("quantidade") int quantidade,
-        @RequestParam("valorVenda") String valorVenda,
-        @RequestParam("valorCompra") String valorCompra) {
 
-    double venda = converterValor(valorVenda);
-    double compra = converterValor(valorCompra);
+    @GetMapping("/produtos")
+    public List<Produtos> listar() {
+        return produtoService.listarTodos();
+    }
 
-    produtos.add(new Produtos(nomeProduto, quantidade, venda, compra));
+    @PostMapping("/produtos")
+    public ResponseEntity<Void> cadastrar(
+            @RequestParam("nomeProduto") String nomeProduto,
+            @RequestParam("quantidade") int quantidade,
+            @RequestParam("valorVenda") String valorVenda,
+            @RequestParam("valorCompra") String valorCompra) {
 
-    return "Produto salvo";
-}
+        double venda = converterValor(valorVenda);
+        double compra = converterValor(valorCompra);
 
-private double converterValor(String valor) {
-    return Double.parseDouble(valor.trim().replace(",", "."));
-}
-    @GetMapping("/produtos/lista")
-    public String lista() {
+        produtoService.cadastrar(new Produtos(nomeProduto, quantidade, venda, compra));
 
-        String html = """
-                <!DOCTYPE html>
-                <html lang="pt-BR">
+        return ResponseEntity.status(HttpStatus.FOUND).header("Location", "/").build();
+    }
 
-                <head>
-                    <meta charset="UTF-8">
-                    <title>Produtos cadastrados</title>
-                    <link rel="stylesheet" href="/style.css">
-                </head>
+    private double converterValor(String valor) {
+        return Double.parseDouble(valor.trim().replace(",", "."));
+    }
 
-                <body>
+    @GetMapping(
+            value = "/produtos/lista",
+            produces = "text/html;charset=UTF-8"
+    )
+    public String lista() throws IOException {
 
-                    <main class="container">
+        ClassPathResource arquivo = new ClassPathResource("templates/produtos.html");
 
-                        <h1>Produtos cadastrados</h1>
+        String html = StreamUtils.copyToString(
+                arquivo.getInputStream(),
+                StandardCharsets.UTF_8
+        );
 
-                        <div class="card">
+        List<Produtos> produtos = produtoService.listarTodos();
 
-                """;
+        String lista = "";
 
         if (produtos.isEmpty()) {
 
-            html += """
-                        <p>Nenhum Produto cadastrado.</p>
-                    """;
+            lista += "<p>Nenhum Produto cadastrado.</p>";
 
         } else {
 
-            html += "<ul>";
+            lista += "<ul>";
 
-            for (Produtos produtos : produtos) {
+            for (Produtos produto : produtos) {
 
-                html += "<li>";
-                html += produtos.getnomeProduto();
-                html += " - ";
-                html += produtos.getquantidade();
-                html += " - ";
-                html += produtos.getvalorVenda();
-                html += " - ";
-                html += produtos.getvalorCompra();
-                html += "</li>";
+                lista += "<li>";
+                lista += produto.getnomeProduto();
+                lista += " - Qtd: ";
+                lista += produto.getquantidade();
+                lista += " - Venda: R$ ";
+                lista += produto.getvalorVenda();
+                lista += " - Compra: R$ ";
+                lista += produto.getvalorCompra();
+                lista += "</li>";
             }
 
-            html += "</ul>";
+            lista += "</ul>";
         }
 
-        html += """
-                        </div>
-
-                        <a href="/">
-                            Voltar para cadastro
-                        </a>
-
-                    </main>
-
-                </body>
-
-                </html>
-                """;
-
-        return html;
+        return html.replace("{{PRODUTOS}}", lista);
     }
 }
